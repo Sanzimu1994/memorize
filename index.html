@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>课文背诵助手</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; background-color: #f4f4f4; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; margin-top: 40px; }
+        .container { background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); width: 80%; max-width: 600px; }
+        h1 { color: #333; text-align: center; margin-bottom: 5px; }
+        .developer-info { color: #777; text-align: center; font-size: 0.8em; margin-bottom: 20px; }
+        label { display: block; margin-bottom: 10px; font-weight: bold; color: #555; }
+        select { width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
+        #output-area { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; min-height: 50px; border-radius: 4px; background-color: #f9f9f9; }
+        #memorized-sentences { margin-bottom: 15px; color: #777; }
+        #current-sentence { margin-bottom: 15px; font-weight: bold; color: #333; }
+        #word-options { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        .option-button { padding: 10px 20px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; background-color: #e0f7fa; color: #00838f; font-size: 16px; transition: background-color 0.3s ease; }
+        .option-button:hover { background-color: #b2ebf2; }
+        .correct { background-color: #81c784; color: #fff; }
+        .incorrect { background-color: #e57373; color: #fff; }
+        #message { color: #d32f2f; margin-top: 10px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>课文背诵助手</h1>
+        <div class="developer-info">yansir开发</div>
+
+        <label for="poem-select">选择背诵篇目：</label>
+        <select id="poem-select" onchange="loadPoem()">
+            <option value="" disabled selected>请选择</option>
+            <option value="poem1">侍坐</option>
+            <option value="poem2">桂枝香·金陵怀古</option>
+            <option value="poem3">登岳阳楼</option>
+            <option value="poem4">念奴娇·过洞庭</option>
+            <option value="poem5">游园·皂罗袍</option>
+        </select>
+
+        <div id="output-area">
+            <div id="memorized-sentences"></div>
+            <div id="current-sentence"></div>
+            <div id="word-options"></div>
+            <div id="message"></div>
+        </div>
+    </div>
+
+    <script>
+        const poems = {
+            poem1: "子路、曾皙、冉有、公西华侍坐。子曰：“以吾一日长乎尔，毋吾以也。居则曰：‘不吾知也！’如或知尔，则何以哉？”子路率尔而对曰：“千乘之国，摄乎大国之间，加之以师旅，因之以饥馑；由也为之，比及三年，可使有勇，且知方也。”夫子哂之。“求！尔何如？”对曰：“方六七十，如五六十，求也为之，比及三年，可使足民。如其礼乐，以俟君子。”“赤！尔何如？”对曰：“非曰能之，愿学焉。宗庙之事，如会同，端章甫，愿为小相焉。”“点！尔何如？”鼓瑟希，铿尔，舍瑟而作，对曰：“异乎三子者之撰。”子曰：“何伤乎？亦各言其志也！”曰：“莫春者，春服既成，冠者五六人，童子六七人，浴乎沂，风乎舞雩，咏而归。”夫子喟然叹曰：“吾与点也！”三子者出，曾皙后。曾皙曰：“夫三子者之言何如？”子曰：“亦各言其志也已矣！”曰：“夫子何哂由也？”曰：“为国以礼，其言不让，是故哂之。”“唯求则非邦也与？”“安见方六七十，如五六十而非邦也者？”“唯赤则非邦也与？”“宗庙会同，非诸侯而何？赤也为之小，孰能为之大？",
+            poem2: "登临送目，正故国晚秋，天气初肃。千里澄江似练，翠峰如簇。归帆去棹残阳里，背西风，酒旗斜矗。彩舟云淡，星河鹭起，画图难足。念往昔，繁华竞逐，叹门外楼头，悲恨相续。千古凭高对此，谩嗟荣辱。六朝旧事随流水，但寒烟衰草凝绿。至今商女，时时犹唱，后庭遗曲。",
+            poem3: "昔闻洞庭水，今上岳阳楼。吴楚东南坼，乾坤日夜浮。亲朋无一字，老病有孤舟。戎马关山北，凭轩涕泗流。",
+            poem4: "洞庭青草，近中秋、更无一点风色。玉鉴琼田三万顷，着我扁舟一叶。素月分辉，明河共影，表里俱澄澈。悠然心会，妙处难与君说。应念岭海经年，孤光自照，肝胆皆冰雪。短发萧骚襟袖冷，稳泛沧浪空阔。尽挹西江，细斟北斗，万象为宾客。扣舷独啸，不知今夕何夕。",
+            poem5: "原来姹紫嫣红开遍，似这般都付与断井颓垣。良辰美景奈何天，赏心乐事谁家院！朝飞暮卷，云霞翠轩；雨丝风片，烟波画船——锦屏人忒看的这韶光贱！"
+        };
+
+        let memorizationText = "";
+        let sentences = [];
+        let currentSentenceIndex = 1;
+        let currentWordIndex = 0;
+        let currentSentenceWords = [];
+        let displayedWords = [];
+        const memorizedSentencesDiv = document.getElementById("memorized-sentences");
+        const currentSentenceDiv = document.getElementById("current-sentence");
+        let incorrectAnswerSelected = false; // Flag to track if an incorrect answer was clicked
+
+        function loadPoem() {
+            const selectedPoem = document.getElementById("poem-select").value;
+            if (poems[selectedPoem]) {
+                memorizationText = poems[selectedPoem];
+                startPractice();
+            } else {
+                memorizationText = "";
+                sentences = [];
+                memorizedSentencesDiv.innerText = "";
+                currentSentenceDiv.innerText = "";
+                document.getElementById("word-options").innerHTML = "";
+                document.getElementById("message").innerText = "";
+            }
+        }
+
+        function startPractice() {
+            sentences = memorizationText.split(/[，。？！.?!]/).filter(sentence => sentence.trim() !== "");
+            if (sentences.length > 0) {
+                memorizedSentencesDiv.innerText = sentences[0] + (memorizationText.includes("。") || memorizationText.includes("？") || memorizationText.includes("！") ? "。" : "");
+                currentSentenceIndex = 1;
+                if (sentences.length > 1) {
+                    currentWordIndex = 0;
+                    currentSentenceWords = sentences[currentSentenceIndex].trim().split("");
+                    displayedWords = [];
+                    displayNextWordOptions();
+                } else {
+                    currentSentenceDiv.innerText = "课文只有一句。";
+                    document.getElementById("word-options").innerHTML = "";
+                    document.getElementById("message").innerText = "";
+                }
+            } else {
+                currentSentenceDiv.innerText = "没有需要背诵的课文。";
+                document.getElementById("word-options").innerHTML = "";
+                document.getElementById("message").innerText = "";
+            }
+        }
+
+        function displayNextWordOptions() {
+            const wordOptionsDiv = document.getElementById("word-options");
+            const messageDiv = document.getElementById("message");
+            messageDiv.innerText = "";
+            wordOptionsDiv.innerHTML = "";
+            incorrectAnswerSelected = false; // Reset the flag
+
+            currentSentenceDiv.innerText = displayedWords.join("");
+
+            if (currentWordIndex < currentSentenceWords.length) {
+                const correctWord = currentSentenceWords[currentWordIndex];
+                const incorrectWord = generateIncorrectWord();
+
+                const options = [
+                    { text: correctWord, correct: true },
+                    { text: incorrectWord, correct: false }
+                ];
+
+                options.sort(() => Math.random() - 0.5);
+
+                options.forEach(option => {
+                    const button = document.createElement("button");
+                    button.innerText = option.text;
+                    button.classList.add("option-button");
+                    button.onclick = () => checkAnswer(option);
+                    wordOptionsDiv.appendChild(button);
+                });
+            } else {
+                memorizedSentencesDiv.innerText += " " + sentences[currentSentenceIndex] + (memorizationText.includes("。") || memorizationText.includes("？") || memorizationText.includes("！") ? "。" : "");
+                currentSentenceIndex++;
+                currentWordIndex = 0;
+                displayedWords = [];
+                if (currentSentenceIndex < sentences.length) {
+                    currentSentenceWords = sentences[currentSentenceIndex].trim().split("");
+                    displayNextWordOptions();
+                } else {
+                    currentSentenceDiv.innerText = "该篇课文背诵完毕！加油！";
+                    wordOptionsDiv.innerHTML = "";
+                }
+            }
+        }
+
+        function generateIncorrectWord() {
+            const allChars = memorizationText.replace(/[，。？！.?! ]/g, '');
+            let incorrectChar = "";
+            if (allChars.length > 1) {
+                while (!incorrectChar || incorrectChar === currentSentenceWords[currentWordIndex]) {
+                    const randomIndex = Math.floor(Math.random() * allChars.length);
+                    incorrectChar = allChars[randomIndex];
+                }
+            } else {
+                incorrectChar = "错";
+            }
+            return incorrectChar;
+        }
+
+        function checkAnswer(selectedOption) {
+            const wordOptionsDiv = document.getElementById("word-options");
+            const messageDiv = document.getElementById("message");
+            const correctWord = currentSentenceWords[currentWordIndex];
+
+            wordOptionsDiv.querySelectorAll('.option-button').forEach(button => {
+                button.disabled = true;
+                if (button.innerText === selectedOption.text) {
+                    button.classList.add(selectedOption.correct ? "correct" : "incorrect");
+                    if (!selectedOption.correct) {
+                        incorrectAnswerSelected = true;
+                    }
+                } else if (button.innerText === correctWord) {
+                    button.classList.add("correct");
+                }
+            });
+
+            if (selectedOption.correct) {
+                displayedWords.push(selectedOption.text);
+                currentWordIndex++;
+                setTimeout(displayNextWordOptions, 500);
+            } else {
+                messageDiv.innerText = `不对！这么简单都出错啊！请点击正确的字继续。`;
+                // Re-enable the correct button for the next click
+                wordOptionsDiv.querySelectorAll('.option-button').forEach(button => {
+                    if (button.innerText === correctWord) {
+                        button.disabled = false;
+                        button.onclick = () => {
+                            displayedWords.push(correctWord);
+                            currentWordIndex++;
+                            setTimeout(displayNextWordOptions, 500);
+                        };
+                    } else {
+                        button.disabled = true; // Keep incorrect button disabled
+                    }
+                });
+            }
+        }
+
+        // Initial load
+        loadPoem();
+    </script>
+</body>
+</html>
